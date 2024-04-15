@@ -1,34 +1,32 @@
 """
-This probably isn't the newest or prettiest implementation of Python web-scraping, but for my purposes it's good enougth.
-Tutorial:
-https://automatetheboringstuff.com/2e/chapter12/
+A simple web scraper that takes the current Sudoku ouzzles from the New York Times website.
+This isn't the newest or prettiest implementation of Python web-scraping, but it's good to learn.
 """
-
-# Well there goes one idea: https://stackoverflow.com/a/1732454/1893164/
 from requests import get
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
+from selenium import webdriver
+from selenium.webdriver import Chrome
+from numpy import matrix
 
-class SuddokuScrape:
+
+class SudokuScrape:
     def __init__(self) -> None:
-        self.puzzleHTML = tuple(get('https://www.nytimes.com/puzzles/sudoku/' + i) for i in ('easy', 'medium', 'hard'))
-        self._downloadPages()
+        self._modes = ('easy', 'medium', 'hard')
+
+    def _downloadPage(self, mode:int) -> str:
+        self.puzzleURL = get('https://www.nytimes.com/puzzles/sudoku/' + self._modes[mode])
+        self.puzzleURL.raise_for_status()
+        return self.puzzleURL.text
+
+    def scrape(self, mode:int) -> list[np.matrix]:
+        if 3 < mode < 0:
+            raise ValueError
+        trimmedHTML = bs(self._downloadPage(mode), 'html.parser').find_all() #FIXME Bs4 cannot search client-rendered tags on it's own.   
+        #<div data-cell="0" aria-label="6" class="su-cell selected prefilled" style="top: 0px; left: 0px; width: 51px; height: 51px;">
+
+        puzzle = matrix()
+        return puzzle
 
 
-    def _downloadPages(self) -> None:
-        for request in self.puzzleHTML:
-            request.raise_for_status()
-
-            fileName = request.url.removeprefix('https://www.nytimes.com/puzzles/sudoku/') + '.txt'
-            webpage = open(fileName, 'wb')
-            
-            for chunk in request.iter_content():
-                webpage.write(chunk)
-            
-            webpage.close()
-        return None
-    
-
-
-
-a = SuddokuScrape()
-a._downloadPages()
+a = SudokuScrape()
+a.scrape(0) #Scrape the easy puzzle.
