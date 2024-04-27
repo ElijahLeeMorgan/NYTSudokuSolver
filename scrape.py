@@ -7,8 +7,7 @@ from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
-from numpy import matrix, empty
-
+from numpy import matrix, empty, int8
 
 class SudokuScrape:
     def __init__(self) -> None:
@@ -18,7 +17,7 @@ class SudokuScrape:
         self.driver = Firefox(options=opt)
         self.driver.start_session
 
-    def _scrapeCells(self, mode:int) -> list[any]: #FIXME Bad typing I know, but I'm having trouble pinning down the WebElement class.
+    def _scrapeCells(self, mode:int) -> list[any]: #FIXME Unsafe typing I know, but I'm having trouble pinning down the WebElement class.
         self.driver.get('https://www.nytimes.com/puzzles/sudoku/' + self._modes[mode])
         sudokuCells = [self.driver.find_element(By.XPATH, f"/html/body/div[3]/div[2]/div[2]/div[6]/div[3]/div/div/div[1]/div/div/div/div[{i}]") for i in range(1,82)]
         sudokuCells = self._turnToSoup(sudokuCells)
@@ -32,29 +31,21 @@ class SudokuScrape:
         self.driver.quit()
         return [soup.find("div", attrs={"data-cell": str(i)}) for i in range(0,81)]
 
-
-
-    def _soupToMatrix(self, elements:list[str]) -> matrix[int]:
+    def _soupToMatrix(self, elements:list[str]) -> matrix[int8]:
         strConvert = {str(i):i for i in range(1,10)}
-        strConvert["empty":0]
-        puzzle = empty(9,9)
+        strConvert["empty"] = 0
+        puzzle = empty((9,9), int8)
 
         for element in elements:
             if element.has_attr("aria-label"):
                 index = elements.index(element)
-                value = strConvert[element] #FIXME Cannot hash slices for dict hashing.
-
-                puzzle[value % 9][value // 9]
+                value = strConvert[element["aria-label"]]
+                puzzle[index // 9][index % 9] = value
             else:
                 raise ValueError
         return puzzle
 
-    def scrape(self, mode:int) -> matrix:
+    def scrape(self, mode:int) -> matrix[int8]:
         if 3 < mode < 0:
             raise ValueError
-        print(self._scrapeCells(mode))
-        return None 
-
-
-a = SudokuScrape()
-a.scrape(0)
+        return self._scrapeCells(mode)
