@@ -46,6 +46,6 @@ class SudokuScrape:
         return puzzle
 
     def scrape(self, mode:int) -> matrix[int8]:
-        if 3 < mode < 0:
+        if 3 < mode <= 0:
             raise ValueError
         return self._scrapeCells(mode)
